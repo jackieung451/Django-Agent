@@ -16,7 +16,7 @@ class RegisterAPIView(APIView):
         if data['password'] != data['password_confirm']:
             raise exceptions.APIException('Passwords do not match!')
 
-        data['is_agent'] = 0
+        data['is_agent'] = 'api/agent' in request.path
 
         serializer = UserSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -36,7 +36,12 @@ class LoginAPIView(APIView):
         if not user.check_password(password):
             raise exceptions.AuthenticationFailed('Incorrect Password!')
 
-        token = JWTAuthentication.generate_jwt(user.id)
+        scope = 'agent' if 'api/agent' in request.path else 'admin'
+
+        if user.is_agent and scope == 'admin':
+            raise exceptions.AuthenticationFailed('Unauthorized')
+
+        token = JWTAuthentication.generate_jwt(user.id, scope)
 
         response = Response()
         response.set_cookie(key='jwt', value=token, httponly=True)
@@ -50,7 +55,13 @@ class UserAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response(UserSerializer(request.user).data)
+        user = request.user
+        data = UserSerializer(user).data
+
+        if 'api/agent' in request.path:
+            data['revenue'] = user.revenue
+
+        return Response(data)
 
 class LogoutAPIView(APIView):
     authentication_classes = [JWTAuthentication]
