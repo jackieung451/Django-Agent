@@ -15,6 +15,7 @@ class UserManager(BaseUserManager):
         user.set_password(password)
         user.is_admin = False
         user.is_staff = False
+        user.is_agent = False
         user.save(using=self._db)
         return user
 
@@ -29,6 +30,7 @@ class UserManager(BaseUserManager):
         )
         user.set_password(password)
         user.is_admin = True
+        user.is_agent = False
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
@@ -46,3 +48,16 @@ class User(AbstractUser):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+class Product(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField(max_length=1000, null=True)
+    image = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+class Link(models.Model):
+    code = models.CharField(max_length=255, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
