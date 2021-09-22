@@ -64,7 +64,7 @@ class Link(models.Model):
 
 class Order(models.Model):
     transaction_id = models.CharField(max_length=255, null=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL)
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     code = models.CharField(max_length=255)
     agent_email = models.CharField(max_length=255)
     first_name = models.CharField(max_length=255)
