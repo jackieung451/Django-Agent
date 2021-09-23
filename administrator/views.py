@@ -7,7 +7,7 @@ from .serializers import ProductSerializer, LinkSerializer, OrderSerializer
 from common.authenitication import JWTAuthentication
 from common.serializers import UserSerializer
 from core.models import User, Product, Link, Order
-
+from django.core.cache import cache
 
 class AgentAPIView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -33,13 +33,28 @@ class ProductGenericAPIView(
         return self.list(request)
 
     def post(self, request):
-        return self.create(request)
+        response = self.create(request)
+        for key in cache.keys('*'):
+            if 'products_frontend' in key:
+                cache.delete(key)
+        cache.delete('products_backend')
+        return response
 
     def put(self, request, pk=None):
-        return self.partial_update(request, pk)
+        response = self.partial_update(request, pk)
+        for key in cache.keys('*'):
+            if 'products_frontend' in key:
+                cache.delete(key)
+        cache.delete('products_backend')
+        return response
 
     def delete(self, request, pk=None):
-        return self.destroy(request, pk)
+        response = self.destroy(request, pk)
+        for key in cache.keys('*'):
+            if 'products_frontend' in key:
+                cache.delete(key)
+        cache.delete('products_backend')
+        return response
 
 class LinkAPIView(APIView):
     authentication_classes = [JWTAuthentication]
